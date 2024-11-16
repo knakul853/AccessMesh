@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"net/smtp"
 	"os"
 	"time"
@@ -28,8 +29,10 @@ func NewEmailService(host string, port int, username, password, from string) *Em
 }
 
 func (s *EmailService) SendVerificationEmail(to, token string) error {
+	log.Printf("Attempting to send verification email to: %s", to)
 	subject := "Verify Your Email"
 	verifyURL := fmt.Sprintf("%s/verify?token=%s", os.Getenv("FRONTEND_URL"), token)
+	log.Printf("Verification URL: %s", verifyURL)
 	body := fmt.Sprintf("Please verify your email by clicking this link: %s", verifyURL)
 	
 	return s.sendEmail(to, subject, body)
@@ -43,6 +46,9 @@ func (s *EmailService) SendPasswordResetEmail(to, token string) error {
 }
 
 func (s *EmailService) sendEmail(to, subject, body string) error {
+	log.Printf("SMTP Configuration - Host: %s, Port: %d, Username: %s, From: %s", 
+		s.smtpHost, s.smtpPort, s.smtpUsername, s.fromEmail)
+	
 	auth := smtp.PlainAuth("", s.smtpUsername, s.smtpPassword, s.smtpHost)
 	
 	msg := fmt.Sprintf("From: %s\r\n"+
@@ -52,7 +58,16 @@ func (s *EmailService) sendEmail(to, subject, body string) error {
 		"%s\r\n", s.fromEmail, to, subject, body)
 
 	addr := fmt.Sprintf("%s:%d", s.smtpHost, s.smtpPort)
-	return smtp.SendMail(addr, auth, s.fromEmail, []string{to}, []byte(msg))
+	log.Printf("Attempting to connect to SMTP server at: %s", addr)
+	
+	err := smtp.SendMail(addr, auth, s.fromEmail, []string{to}, []byte(msg))
+	if err != nil {
+		log.Printf("Failed to send email: %v", err)
+		return fmt.Errorf("failed to send email: %w", err)
+	}
+	
+	log.Printf("Email sent successfully to: %s", to)
+	return nil
 }
 
 func GenerateToken() (string, error) {

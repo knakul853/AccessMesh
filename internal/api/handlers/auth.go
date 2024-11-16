@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -58,22 +60,28 @@ func NewAuthHandler(store *store.MongoStore, emailService *services.EmailService
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("Failed to bind registration request: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	log.Printf("Processing registration for user: %s, email: %s", req.Username, req.Email)
+
 	var existingUser models.User
 	err := h.store.Users().FindOne(c.Request.Context(), bson.M{"username": req.Username}).Decode(&existingUser)
 	if err == nil {
+		log.Printf("Username already exists: %s", req.Username)
 		c.JSON(http.StatusConflict, gin.H{"error": "username already exists"})
 		return
 	}
 
 	verificationToken, err := services.GenerateToken()
 	if err != nil {
+		log.Printf("Failed to generate verification token: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate verification token"})
 		return
 	}
+	log.Printf("Generated verification token for user: %s", req.Username)
 
 	user := models.User{
 		Username:          req.Username,
@@ -87,24 +95,29 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	if err := user.HashPassword(); err != nil {
+		log.Printf("Failed to hash password: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to hash password"})
 		return
 	}
 
 	result, err := h.store.Users().InsertOne(c.Request.Context(), user)
 	if err != nil {
+		log.Printf("Failed to create user in database: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user"})
 		return
 	}
 
 	user.ID = result.InsertedID.(primitive.ObjectID)
+	log.Printf("Successfully created user in database with ID: %s", user.ID.Hex())
 
 	if err := h.emailService.SendVerificationEmail(user.Email, verificationToken); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send verification email"})
+		log.Printf("Failed to send verification email: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to send verification email: %v", err)})
 		return
 	}
 
 	user.Password = ""
+	log.Printf("Registration successful for user: %s", user.Username)
 	c.JSON(http.StatusCreated, user)
 }
 

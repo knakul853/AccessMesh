@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/knakul853/accessmesh/internal/api"
 	"github.com/knakul853/accessmesh/internal/config"
 	"github.com/knakul853/accessmesh/internal/store"
@@ -17,6 +18,11 @@ import (
 )
 
 func main() {
+	// Load .env file
+	if err := godotenv.Load(); err != nil {
+		log.Printf("Warning: .env file not found or error loading it: %v", err)
+	}
+
 	cfg := config.Load()
 
 	db, err := store.NewMongoStore(cfg.MongoURI)

@@ -31,12 +31,25 @@ func SetupRoutes(r *gin.Engine, store *store.MongoStore, enforcer *enforcer.Enfo
 	r.Use(middleware.RateLimiter(rateLimiter))
 
 	// Initialize email service
+	smtpHost := os.Getenv("SMTP_HOST")
+	smtpUsername := os.Getenv("SMTP_USERNAME")
+	smtpPassword := os.Getenv("SMTP_PASSWORD")
+	smtpFromEmail := os.Getenv("SMTP_FROM_EMAIL")
+	frontendURL := os.Getenv("FRONTEND_URL")
+
+	log.Printf("Initializing email service with config - Host: %s, Username: %s, FromEmail: %s, FrontendURL: %s",
+		smtpHost, smtpUsername, smtpFromEmail, frontendURL)
+
+	if smtpHost == "" || smtpUsername == "" || smtpPassword == "" || smtpFromEmail == "" {
+		log.Printf("WARNING: Email service configuration is incomplete. Check your environment variables.")
+	}
+
 	emailService := services.NewEmailService(
-		os.Getenv("SMTP_HOST"),
+		smtpHost,
 		587, // Standard SMTP port
-		os.Getenv("SMTP_USERNAME"),
-		os.Getenv("SMTP_PASSWORD"),
-		os.Getenv("SMTP_FROM_EMAIL"),
+		smtpUsername,
+		smtpPassword,
+		smtpFromEmail,
 	)
 
 	policyHandler := handlers.NewPolicyHandler(store)
