@@ -39,29 +39,21 @@ func (h *PolicyHandler) Create(c *gin.Context) {
 
 func (h *PolicyHandler) List(c *gin.Context) {
 	log.Println("Listing policies...")
-	cur, err := h.store.Policies().Find(c.Request.Context(), nil)
+	cur, err := h.store.Policies().Find(c.Request.Context(), primitive.D{})
 	if err != nil {
 		log.Printf("Error listing policies: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list policies"})
 		return
 	}
 	defer cur.Close(c.Request.Context())
-	var policies []models.Policy
-	for cur.Next(c.Request.Context()) {
-		var policy models.Policy
-		err := cur.Decode(&policy)
-		if err != nil {
-			log.Printf("Error decoding policy: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to decode policy"})
-			return
-		}
-		policies = append(policies, policy)
-	}
-	if err := cur.Err(); err != nil {
-		log.Printf("Error iterating cursor: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to iterate cursor"})
+	
+	policies := []models.Policy{}
+	if err := cur.All(c.Request.Context(), &policies); err != nil {
+		log.Printf("Error decoding policies: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to decode policies"})
 		return
 	}
+
 	c.JSON(http.StatusOK, policies)
 }
 

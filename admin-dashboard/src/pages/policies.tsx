@@ -62,18 +62,22 @@ export default function Policies() {
 
       const response = await fetch(`${API_BASE_URL}/api/v1/policies`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch policies');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to fetch policies: ${response.status}`);
       }
 
       const data = await response.json();
       setPolicies(data);
+      setError(''); // Clear any existing errors
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching policies:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch policies');
     } finally {
       setLoading(false);
     }
@@ -132,9 +136,24 @@ export default function Policies() {
         return;
       }
 
+      // Log the request payload
+      console.log('Submitting policy with data:', formData);
+
       const url = editingPolicy
         ? `${API_BASE_URL}/api/v1/policies/${editingPolicy._id}`
         : `${API_BASE_URL}/api/v1/policies`;
+
+      console.log('Making request to:', url);
+
+      const requestBody = {
+        ...formData,
+        conditions: {
+          ip_range: formData.conditions.ip_range.filter(ip => ip.trim() !== ''),
+          time_range: formData.conditions.time_range.filter(time => time.trim() !== '')
+        }
+      };
+
+      console.log('Request body:', requestBody);
 
       const response = await fetch(url, {
         method: editingPolicy ? 'PUT' : 'POST',
@@ -142,17 +161,34 @@ export default function Policies() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(requestBody)
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to save policy');
+      console.log('Response status:', response.status);
+      
+      const responseText = await response.text();
+      console.log('Raw response:', responseText);
+
+      let data;
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (e) {
+        console.error('Error parsing response:', e);
+        throw new Error('Invalid response from server');
       }
 
+      if (!response.ok) {
+        throw new Error(data.error || `Failed to ${editingPolicy ? 'update' : 'create'} policy: ${response.status}`);
+      }
+
+      console.log('Policy saved successfully:', data);
+      
       handleCloseDialog();
-      fetchPolicies();
+      await fetchPolicies(); // Refresh the policies list
+      setError(''); // Clear any existing errors
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error saving policy:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save policy');
     }
   };
 
@@ -171,17 +207,21 @@ export default function Policies() {
       const response = await fetch(`${API_BASE_URL}/api/v1/policies/${id}`, {
         method: 'DELETE',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete policy');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to delete policy: ${response.status}`);
       }
 
-      fetchPolicies();
+      await fetchPolicies(); // Refresh the policies list
+      setError(''); // Clear any existing errors
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error deleting policy:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete policy');
     }
   };
 
@@ -238,9 +278,17 @@ export default function Policies() {
       </Box>
 
       {error && (
-        <Typography color="error" mb={2}>
-          {error}
-        </Typography>
+        <Box sx={{ 
+          backgroundColor: '#fdeded', 
+          color: '#5f2120', 
+          padding: 2, 
+          borderRadius: 1,
+          marginBottom: 2 
+        }}>
+          <Typography color="inherit">
+            {error}
+          </Typography>
+        </Box>
       )}
 
       <TableContainer component={Paper}>

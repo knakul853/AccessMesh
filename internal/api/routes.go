@@ -68,16 +68,19 @@ func SetupRoutes(r *gin.Engine, store *store.MongoStore, enforcer *enforcer.Enfo
 	api.Use(middleware.SessionAuth(middleware.SessionConfig{
 		JWTSecret: []byte(os.Getenv("JWT_SECRET")),
 	}))
-	api.Use(middleware.AccessControl(enforcer))
 
+	// Place policy routes before access control middleware
 	policies := api.Group("/policies")
 	{
-		policies.POST("/", policyHandler.Create)
-		policies.GET("/", policyHandler.List)
+		policies.POST("", policyHandler.Create)
+		policies.GET("", policyHandler.List)
 		policies.GET("/:id", policyHandler.Get)
 		policies.PUT("/:id", policyHandler.Update)
 		policies.DELETE("/:id", policyHandler.Delete)
 	}
+
+	// Apply access control after policy routes
+	api.Use(middleware.AccessControl(enforcer))
 
 	log.Println("API routes setup complete.")
 }
