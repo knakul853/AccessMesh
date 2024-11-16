@@ -8,12 +8,17 @@ import (
 )
 
 type User struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	Username  string             `bson:"username" json:"username"`
-	Password  string             `bson:"password" json:"-"`
-	Role      string             `bson:"role" json:"role"`
-	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
-	UpdatedAt time.Time          `bson:"updated_at" json:"updated_at"`
+	ID                primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	Username          string             `bson:"username" json:"username"`
+	Password          string             `bson:"password" json:"-"`
+	Role              string             `bson:"role" json:"role"`
+	Email             string             `bson:"email" json:"email"`
+	EmailVerified     bool               `bson:"email_verified" json:"email_verified"`
+	VerificationToken string             `bson:"verification_token,omitempty" json:"-"`
+	ResetToken        string             `bson:"reset_token,omitempty" json:"-"`
+	ResetTokenExpiry  time.Time          `bson:"reset_token_expiry,omitempty" json:"-"`
+	CreatedAt         time.Time          `bson:"created_at" json:"created_at"`
+	UpdatedAt         time.Time          `bson:"updated_at" json:"updated_at"`
 }
 
 func (u *User) HashPassword() error {
