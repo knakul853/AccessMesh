@@ -92,6 +92,58 @@ go run cmd/server/main.go
 └── model.conf          # Casbin model configuration
 ```
 
+## Admin Dashboard
+
+The project includes a modern admin dashboard built with Next.js and TypeScript for managing roles, policies, and users through a user-friendly interface.
+
+### Dashboard Features
+
+- Role-based access management
+- Policy configuration interface
+- User management
+- Real-time statistics
+- Responsive Material-UI design
+- Type-safe TypeScript implementation
+
+### Dashboard Setup
+
+1. Navigate to the admin dashboard directory:
+```bash
+cd admin-dashboard
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Set up environment variables:
+Create a `.env.local` file in the admin-dashboard directory:
+```
+NEXT_PUBLIC_API_URL=http://localhost:8080
+```
+
+4. Start the development server:
+```bash
+npm run dev
+```
+
+The admin dashboard will be available at `http://localhost:3000`
+
+### Dashboard Structure
+
+```
+admin-dashboard/
+├── src/
+│   ├── components/     # Reusable UI components
+│   │   └── Layout/    # Layout components
+│   ├── lib/           # Utilities and API client
+│   ├── pages/         # Next.js pages
+│   └── types/         # TypeScript interfaces
+├── public/            # Static assets
+└── package.json       # Dependencies and scripts
+```
+
 ## Docker Deployment
 
 ```dockerfile
