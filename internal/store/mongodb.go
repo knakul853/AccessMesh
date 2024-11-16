@@ -45,3 +45,7 @@ func (s *MongoStore) GetClient() *mongo.Client {
 func (s *MongoStore) GetURI() string {
 	return s.Uri
 }
+
+func (s *MongoStore) Users() *mongo.Collection {
+	return s.DB.Collection("users")
+}
