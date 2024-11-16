@@ -12,6 +12,7 @@ import {
   Typography,
   Alert,
   Snackbar,
+  CircularProgress,
 } from '@mui/material';
 import DashboardLayout from '@/components/Layout/DashboardLayout';
 import RoleForm from '@/components/RoleForm';
@@ -22,7 +23,7 @@ import api from '@/lib/api';
 const fetcher = (url: string) => api.get(url).then((res) => res.data);
 
 export default function RolesPage() {
-  const { data: roles, error } = useSWR<Role[]>('/api/v1/roles', fetcher);
+  const { data: roles, error, isLoading } = useSWR<Role[]>('/api/v1/roles', fetcher);
   const [openForm, setOpenForm] = React.useState(false);
   const [selectedRole, setSelectedRole] = React.useState<Role | undefined>();
   const [message, setMessage] = React.useState<{ text: string; type: 'success' | 'error' } | null>(null);
@@ -72,82 +73,112 @@ export default function RolesPage() {
     setSelectedRole(undefined);
   };
 
-  if (error) {
-    return (
-      <DashboardLayout>
-        <Typography color="error">Failed to load roles</Typography>
-      </DashboardLayout>
-    );
-  }
+  const renderContent = () => {
+    if (error) {
+      return (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography color="error" gutterBottom>
+            Failed to load roles
+          </Typography>
+          <Button variant="contained" onClick={() => mutate('/api/v1/roles')}>
+            Retry
+          </Button>
+        </Box>
+      );
+    }
 
-  if (!roles) {
+    if (isLoading) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+
+    if (!roles || roles.length === 0) {
+      return (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography color="textSecondary" gutterBottom>
+            No roles found
+          </Typography>
+          <Button 
+            variant="contained" 
+            color="primary"
+            onClick={() => setOpenForm(true)}
+          >
+            Create First Role
+          </Button>
+        </Box>
+      );
+    }
+
     return (
-      <DashboardLayout>
-        <Typography>Loading...</Typography>
-      </DashboardLayout>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Name</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell>Permissions</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {roles.map((role) => (
+              <TableRow key={role.id}>
+                <TableCell>{role.name}</TableCell>
+                <TableCell>{role.description}</TableCell>
+                <TableCell>
+                  {role.permissions.map((perm, index) => (
+                    <React.Fragment key={perm}>
+                      {perm}
+                      {index < role.permissions.length - 1 ? ', ' : ''}
+                    </React.Fragment>
+                  ))}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    sx={{ mr: 1 }}
+                    onClick={() => handleEdit(role)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="error"
+                    onClick={() => handleDeleteRole(role.id)}
+                  >
+                    Delete
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     );
-  }
+  };
 
   return (
     <DashboardLayout>
       <Box sx={{ mb: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
           <Typography variant="h4">Roles</Typography>
-          <Button 
-            variant="contained" 
-            color="primary"
-            onClick={() => setOpenForm(true)}
-          >
-            Create New Role
-          </Button>
+          {(roles && roles.length > 0 || error) && (
+            <Button 
+              variant="contained" 
+              color="primary"
+              onClick={() => setOpenForm(true)}
+            >
+              Create New Role
+            </Button>
+          )}
         </Box>
 
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Permissions</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {roles.map((role) => (
-                <TableRow key={role.id}>
-                  <TableCell>{role.name}</TableCell>
-                  <TableCell>{role.description}</TableCell>
-                  <TableCell>
-                    {role.permissions.map((perm, index) => (
-                      <React.Fragment key={perm}>
-                        {perm}
-                        {index < role.permissions.length - 1 ? ', ' : ''}
-                      </React.Fragment>
-                    ))}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      sx={{ mr: 1 }}
-                      onClick={() => handleEdit(role)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="error"
-                      onClick={() => handleDeleteRole(role.id)}
-                    >
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        {renderContent()}
       </Box>
 
       <RoleForm
