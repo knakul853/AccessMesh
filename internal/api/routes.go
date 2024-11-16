@@ -54,6 +54,7 @@ func SetupRoutes(r *gin.Engine, store *store.MongoStore, enforcer *enforcer.Enfo
 
 	policyHandler := handlers.NewPolicyHandler(store)
 	authHandler := handlers.NewAuthHandler(store, emailService)
+	roleHandler := handlers.NewRoleHandler(store)
 
 	auth := r.Group("/api/v1/auth")
 	{
@@ -77,6 +78,16 @@ func SetupRoutes(r *gin.Engine, store *store.MongoStore, enforcer *enforcer.Enfo
 		policies.GET("/:id", policyHandler.Get)
 		policies.PUT("/:id", policyHandler.Update)
 		policies.DELETE("/:id", policyHandler.Delete)
+	}
+
+	// Role management routes
+	roles := api.Group("/roles")
+	{
+		roles.POST("", roleHandler.Create)
+		roles.GET("", roleHandler.List)
+		roles.GET("/:id", roleHandler.Get)
+		roles.PUT("/:id", roleHandler.Update)
+		roles.DELETE("/:id", roleHandler.Delete)
 	}
 
 	// Apply access control after policy routes
