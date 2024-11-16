@@ -66,7 +66,7 @@ func SetupRoutes(r *gin.Engine, store *store.MongoStore, enforcer *enforcer.Enfo
 
 	api := r.Group("/api/v1")
 	api.Use(middleware.SessionAuth(middleware.SessionConfig{
-		JWTSecret: []byte("your-secret-key"), // Replace with your secret key
+		JWTSecret: []byte(os.Getenv("JWT_SECRET")),
 	}))
 	api.Use(middleware.AccessControl(enforcer))
 

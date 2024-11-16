@@ -63,8 +63,9 @@ export default function Login() {
       localStorage.setItem('accessToken', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       
-      // Redirect to dashboard
-      router.push('/dashboard');
+      // Get returnTo from URL or default to dashboard
+      const returnTo = router.query.returnTo as string || '/dashboard';
+      router.push(decodeURIComponent(returnTo));
     } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during login');
