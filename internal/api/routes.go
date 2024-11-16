@@ -88,6 +88,8 @@ func SetupRoutes(r *gin.Engine, store *store.MongoStore, enforcer *enforcer.Enfo
 	users.Use(middleware.AuthMiddleware())
 	{
 		users.GET("", handlers.GetUsers(store))
+		users.PUT("/:id", handlers.UpdateUser(store))
+		users.DELETE("/:id", handlers.DeleteUser(store))
 	}
 
 	// Role management routes
