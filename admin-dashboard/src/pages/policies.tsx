@@ -23,6 +23,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import { API_BASE_URL } from '../config/api';
 import { useRouter } from 'next/router';
+import DashboardLayout from '@/components/Layout/DashboardLayout';
 
 interface Policy {
   _id: string;
@@ -255,96 +256,103 @@ export default function Policies() {
     }));
   };
 
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   return (
-    <Box p={3}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">Policies</Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenDialog()}
-        >
-          Add Policy
-        </Button>
-      </Box>
-
-      {error && (
-        <Box sx={{ 
-          backgroundColor: '#fdeded', 
-          color: '#5f2120', 
-          padding: 2, 
-          borderRadius: 1,
-          marginBottom: 2 
-        }}>
-          <Typography color="inherit">
-            {error}
-          </Typography>
+    <DashboardLayout>
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+          <Typography variant="h4">Policies</Typography>
+          <Button 
+            variant="contained" 
+            color="primary"
+            onClick={() => handleOpenDialog()}
+          >
+            Create New Policy
+          </Button>
         </Box>
-      )}
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Role</TableCell>
-              <TableCell>Resource</TableCell>
-              <TableCell>Action</TableCell>
-              <TableCell>Conditions</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {policies.map((policy) => (
-              <TableRow key={policy._id}>
-                <TableCell>{policy.role}</TableCell>
-                <TableCell>{policy.resource}</TableCell>
-                <TableCell>{policy.action}</TableCell>
-                <TableCell>
-                  <Box>
-                    {policy.conditions.ip_range.length > 0 && (
-                      <Box mb={1}>
-                        <Typography variant="subtitle2">IP Ranges:</Typography>
-                        <ul style={{ margin: 0, paddingLeft: 20 }}>
-                          {policy.conditions.ip_range.map((ip, index) => (
-                            <li key={index}>{ip}</li>
-                          ))}
-                        </ul>
-                      </Box>
-                    )}
-                    {policy.conditions.time_range.length > 0 && (
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Typography color="error" gutterBottom>
+              {error}
+            </Typography>
+            <Button variant="contained" onClick={fetchPolicies}>
+              Retry
+            </Button>
+          </Box>
+        ) : policies.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Typography color="textSecondary" gutterBottom>
+              No policies found
+            </Typography>
+            <Button 
+              variant="contained" 
+              color="primary"
+              onClick={() => handleOpenDialog()}
+            >
+              Create First Policy
+            </Button>
+          </Box>
+        ) : (
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Role</TableCell>
+                  <TableCell>Resource</TableCell>
+                  <TableCell>Action</TableCell>
+                  <TableCell>Conditions</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {policies.map((policy) => (
+                  <TableRow key={policy._id}>
+                    <TableCell>{policy.role}</TableCell>
+                    <TableCell>{policy.resource}</TableCell>
+                    <TableCell>{policy.action}</TableCell>
+                    <TableCell>
                       <Box>
-                        <Typography variant="subtitle2">Time Ranges:</Typography>
-                        <ul style={{ margin: 0, paddingLeft: 20 }}>
-                          {policy.conditions.time_range.map((time, index) => (
-                            <li key={index}>{time}</li>
-                          ))}
-                        </ul>
+                        {policy.conditions.ip_range.length > 0 && (
+                          <Box mb={1}>
+                            <Typography variant="subtitle2">IP Ranges:</Typography>
+                            <ul style={{ margin: 0, paddingLeft: 20 }}>
+                              {policy.conditions.ip_range.map((ip, index) => (
+                                <li key={index}>{ip}</li>
+                              ))}
+                            </ul>
+                          </Box>
+                        )}
+                        {policy.conditions.time_range.length > 0 && (
+                          <Box>
+                            <Typography variant="subtitle2">Time Ranges:</Typography>
+                            <ul style={{ margin: 0, paddingLeft: 20 }}>
+                              {policy.conditions.time_range.map((time, index) => (
+                                <li key={index}>{time}</li>
+                              ))}
+                            </ul>
+                          </Box>
+                        )}
                       </Box>
-                    )}
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleOpenDialog(policy)} color="primary">
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => handleDelete(policy._id)} color="error">
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                    </TableCell>
+                    <TableCell>
+                      <IconButton onClick={() => handleOpenDialog(policy)} color="primary">
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton onClick={() => handleDelete(policy._id)} color="error">
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Box>
 
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
@@ -441,6 +449,6 @@ export default function Policies() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </DashboardLayout>
   );
 }
