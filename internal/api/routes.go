@@ -56,6 +56,7 @@ func SetupRoutes(r *gin.Engine, store *store.MongoStore, enforcer *enforcer.Enfo
 	authHandler := handlers.NewAuthHandler(store, emailService)
 	roleHandler := handlers.NewRoleHandler(store)
 
+	// Public auth routes (no authentication required)
 	auth := r.Group("/api/v1/auth")
 	{
 		auth.POST("/register", authHandler.Register)
@@ -63,8 +64,10 @@ func SetupRoutes(r *gin.Engine, store *store.MongoStore, enforcer *enforcer.Enfo
 		auth.POST("/verify-email", authHandler.VerifyEmail)
 		auth.POST("/forgot-password", authHandler.ForgotPassword)
 		auth.POST("/reset-password", authHandler.ResetPassword)
+		auth.GET("/logout", authHandler.Logout)
 	}
 
+	// Protected routes (require authentication)
 	api := r.Group("/api/v1")
 	api.Use(middleware.SessionAuth(middleware.SessionConfig{
 		JWTSecret: []byte(os.Getenv("JWT_SECRET")),
@@ -78,6 +81,13 @@ func SetupRoutes(r *gin.Engine, store *store.MongoStore, enforcer *enforcer.Enfo
 		policies.GET("/:id", policyHandler.Get)
 		policies.PUT("/:id", policyHandler.Update)
 		policies.DELETE("/:id", policyHandler.Delete)
+	}
+
+	// User routes
+	users := api.Group("/users")
+	users.Use(middleware.AuthMiddleware())
+	{
+		users.GET("", handlers.GetUsers(store))
 	}
 
 	// Role management routes

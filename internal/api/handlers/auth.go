@@ -266,3 +266,10 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		User:  user,
 	})
 }
+
+// Logout handles user logout
+func (h *AuthHandler) Logout(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Successfully logged out",
+	})
+}
