@@ -9,9 +9,9 @@ import (
 )
 
 type MongoStore struct {
-	client *mongo.Client
-	db     *mongo.Database
-	uri    string
+	Client *mongo.Client
+	DB     *mongo.Database
+	Uri    string
 }
 
 func NewMongoStore(uri string) (*MongoStore, error) {
@@ -24,24 +24,24 @@ func NewMongoStore(uri string) (*MongoStore, error) {
 	}
 
 	return &MongoStore{
-		client: client,
-		db:     client.Database("pbac"),
-		uri:    uri,
+		Client: client,
+		DB:     client.Database("pbac"),
+		Uri:    uri,
 	}, nil
 }
 
 func (s *MongoStore) Policies() *mongo.Collection {
-	return s.db.Collection("policies")
+	return s.DB.Collection("policies")
 }
 
 func (s *MongoStore) Roles() *mongo.Collection {
-	return s.db.Collection("roles")
+	return s.DB.Collection("roles")
 }
 
 func (s *MongoStore) GetClient() *mongo.Client {
-	return s.client
+	return s.Client
 }
 
 func (s *MongoStore) GetURI() string {
-	return s.uri
+	return s.Uri
 }

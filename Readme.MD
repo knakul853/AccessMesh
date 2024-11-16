@@ -22,7 +22,7 @@ A Go-based PBAC system for microservices implementing dynamic, fine-grained acce
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/pbac
+git clone https://github.com/knakul853/accessmesh
 cd pbac
 ```
 
