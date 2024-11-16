@@ -2,7 +2,9 @@ package api
 
 import (
 	"log"
+	"os"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/knakul853/accessmesh/internal/api/handlers"
 	"github.com/knakul853/accessmesh/internal/api/middleware"
@@ -17,17 +19,24 @@ import (
 func SetupRoutes(r *gin.Engine, store *store.MongoStore, enforcer *enforcer.Enforcer) {
 	log.Println("Setting up API routes...")
 
+	// Configure CORS
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:3000"} // Next.js dev server
+	config.AllowCredentials = true
+	config.AllowHeaders = append(config.AllowHeaders, "Authorization")
+	r.Use(cors.New(config))
+
 	// Initialize rate limiter
 	rateLimiter := middleware.NewIPRateLimiter(rate.Limit(100), 100)
 	r.Use(middleware.RateLimiter(rateLimiter))
 
 	// Initialize email service
 	emailService := services.NewEmailService(
-		"smtp.example.com",       // Replace with your SMTP host
-		587,                      // Replace with your SMTP port
-		"your-username",          // Replace with your SMTP username
-		"your-password",          // Replace with your SMTP password
-		"noreply@yourdomain.com", // Replace with your from email
+		os.Getenv("SMTP_HOST"),
+		587, // Standard SMTP port
+		os.Getenv("SMTP_USERNAME"),
+		os.Getenv("SMTP_PASSWORD"),
+		os.Getenv("SMTP_FROM_EMAIL"),
 	)
 
 	policyHandler := handlers.NewPolicyHandler(store)

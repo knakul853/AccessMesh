@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { Button, TextField, Box, Typography, Container, Alert } from '@mui/material';
+import { API_BASE_URL } from '../config/api';
 
 export default function Register() {
   const router = useRouter();
@@ -23,16 +24,18 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/v1/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(formData),
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        const data = await response.json();
         throw new Error(data.error || 'Registration failed');
       }
 
@@ -41,7 +44,7 @@ export default function Register() {
         router.push('/login');
       }, 3000);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Registration failed. Please try again.');
     }
   };
 

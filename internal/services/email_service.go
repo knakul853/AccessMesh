@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/smtp"
+	"os"
 	"time"
 )
 
@@ -28,7 +29,8 @@ func NewEmailService(host string, port int, username, password, from string) *Em
 
 func (s *EmailService) SendVerificationEmail(to, token string) error {
 	subject := "Verify Your Email"
-	body := fmt.Sprintf("Please verify your email by clicking this link: http://yourdomain.com/verify?token=%s", token)
+	verifyURL := fmt.Sprintf("%s/verify?token=%s", os.Getenv("FRONTEND_URL"), token)
+	body := fmt.Sprintf("Please verify your email by clicking this link: %s", verifyURL)
 	
 	return s.sendEmail(to, subject, body)
 }
